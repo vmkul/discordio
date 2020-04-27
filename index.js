@@ -1,5 +1,9 @@
 'use strict';
 
+const express = require('express')
+const path = require('path')
+const PORT = process.env.PORT || 5000
+
 const Discord = require('discord.js');
 const fs = require('fs');
 const client = new Discord.Client();
@@ -36,3 +40,7 @@ client.on('message', message => {
 });
 
 client.login(token);
+express()
+  .use(express.static(path.join(__dirname, 'public')))
+  .get('/', (req, res) => res.send('pages/index'))
+  .listen(PORT, () => console.log(`Listening on ${ PORT }`))
