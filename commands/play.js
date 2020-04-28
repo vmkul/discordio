@@ -6,7 +6,7 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 
 const opts = {
   maxResults: 10,
-  key: 'AIzaSyCLfxKAPCJYfVEfzcmnfTfykUIjC3ujYzA'
+  key: 'AIzaSyByAq1pQuO1Eb2I6hfYOmSJ4Wy7Ch3t3_w'
 };
 
 const obj = {
@@ -20,9 +20,9 @@ const obj = {
     });
     if (controller === undefined) controller = new song_control(guild);
     if (args[0].startsWith('https://'))
-      controller.play(message, args);
+      setImmediate(() => controller.play(message, args));
     else
-      find_song(message, args, controller);
+      find_song(message, args);
   },
 };
 
@@ -35,7 +35,7 @@ class song_control {
     this.stack = [];
     this.playing = false;
     obj.guilds.push(this);
-    this.volume = 0.4;
+    this.volume = 1;
   }
 
   async play(message, args) {
@@ -64,6 +64,7 @@ class song_control {
         const arg = this.stack.shift();
         obj.execute(message, arg);
       }
+      return true;
     });
 
     this.dispatcher.on('error', console.error);
@@ -71,9 +72,10 @@ class song_control {
 }
 
 const find_song = (message, args, controller) => {
-    search(args.join(' '), opts, function (err, results) {
-      if (err) return console.log(err);
-      const link = results[0].link;
-      controller.play(message, [link]);
-    });
+  search(args.join(' '), opts, function (err, results) {
+    if (err) return console.log(err);
+    if (results[0].kind !== 'youtube#video') return;
+    const link = results[0].link;
+    obj.execute(message, [link]).catch(err => console.log(err));
+  });
 }

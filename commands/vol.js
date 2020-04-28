@@ -1,14 +1,12 @@
+const findC = require('../find_con');
+
 module.exports = {
   name: 'vol',
   description: 'Set instant volume',
   execute(message, args, client) {
     const volume = parseFloat(args[0]);
-    if (typeof volume !== 'number' && args.length !== 0) return;
-    const guilds = client.commands.get('play').guilds;
-    const guild = message.guild.name;
-    let controller = guilds.find(element => {
-      return element.guild_name === guild;
-    });
+    if (isNaN(volume) && args.length !== 0) return;
+    const controller = findC(message, client);
     if (controller === undefined) return;
 
     if (args.length === 0) {
