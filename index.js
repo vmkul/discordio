@@ -20,7 +20,7 @@ client.once('ready', () => {
   console.log('Ready!');
 });
 
-client.on('message', message => {
+client.on('message', async message => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
 
   const args = message.content.slice(prefix.length).split(/ +/);
@@ -30,7 +30,7 @@ client.on('message', message => {
   const command = client.commands.get(commandName);
 
   try {
-    command.execute(message, args, client);
+    setImmediate(() => command.execute(message, args, client));
   } catch (error) {
     console.error(error);
     message.reply('there was an error trying to execute that command!');
