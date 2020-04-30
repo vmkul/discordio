@@ -49,7 +49,7 @@ class song_control {
 
     const link = args[0];
     if (!this.connection) this.connection = await message.member.voice.channel.join();
-    this.dispatcher = this.connection.play(stream(link), {volume: this.volume});
+    this.dispatcher = this.connection.play(stream(link).on('error', (err) => console.error(err)), {volume: this.volume});
     message.channel.send('Playing ' + link);
 
     this.dispatcher.on('start', () => {

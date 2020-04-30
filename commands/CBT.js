@@ -1,5 +1,5 @@
 module.exports = {
-  name: 'CBT',
+  name: 'cbt',
   description: 'Is it a joke?',
   execute(message, args) {
     message.channel.send('You meant computer based training?');
