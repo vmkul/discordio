@@ -51,16 +51,21 @@ class song_control {
 
     const link = args[0];
     if (!this.connection) this.connection = await message.member.voice.channel.join();
-    if (this.effect) {
-      const str = new PassThrough();
-      ffmpeg(stream(link)).audioFilter(this.effect).format('mp3').output(str)
-        .on('error', err => {
-          message.channel.send('Wrong filter!');
-          this.effect = null;
-        }).run();
-      this.dispatcher = this.connection.play(str, {volume: this.volume});
-    } else
-      this.dispatcher = this.connection.play(stream(link).on('error', (err) => console.error(err)), {volume: this.volume});
+    try {
+      if (this.effect) {
+        const str = new PassThrough();
+        ffmpeg(stream(link)).audioFilter(this.effect).format('mp3').output(str)
+          .on('error', err => {
+            message.channel.send('Wrong filter!');
+            this.effect = null;
+          }).run();
+        this.dispatcher = this.connection.play(str, {volume: this.volume});
+      } else
+        this.dispatcher = this.connection.play(stream(link).on('error', (err) => console.error(err)), {volume: this.volume});
+    } catch (e) {
+      console.error(e);
+      await this.play(message, args)
+    }
 
     message.channel.send('Playing ' + link);
 
