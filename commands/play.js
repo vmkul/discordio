@@ -3,6 +3,7 @@ const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
 const search = require('youtube-search');
 ffmpeg.setFfmpegPath(ffmpegPath);
+const { PassThrough } = require('stream');
 
 const opts = {
   maxResults: 10,
@@ -36,6 +37,7 @@ class song_control {
     this.playing = false;
     obj.guilds.push(this);
     this.volume = 1;
+    this.effect = null;
   }
 
   async play(message, args) {
@@ -49,7 +51,17 @@ class song_control {
 
     const link = args[0];
     if (!this.connection) this.connection = await message.member.voice.channel.join();
-    this.dispatcher = this.connection.play(stream(link).on('error', (err) => console.error(err)), {volume: this.volume});
+    if (this.effect) {
+      const str = new PassThrough();
+      ffmpeg(stream(link)).audioFilter(this.effect).format('mp3').output(str)
+        .on('error', err => {
+          message.channel.send('Wrong filter!');
+          this.effect = null;
+        }).run();
+      this.dispatcher = this.connection.play(str, {volume: this.volume});
+    } else
+      this.dispatcher = this.connection.play(stream(link).on('error', (err) => console.error(err)), {volume: this.volume});
+
     message.channel.send('Playing ' + link);
 
     this.dispatcher.on('start', () => {
