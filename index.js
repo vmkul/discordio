@@ -41,5 +41,5 @@ client.on('message', async message => {
 client.login(token);
 express()
   .use(express.static(path.join(__dirname, 'public')))
-  .get('/', (req, res) => res.send('pages/index'))
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`))
+  .get('/', (req, res) => res.send('I am discordio bot'))
+  .listen(PORT, () => console.log(`Listening on ${ PORT }`));
