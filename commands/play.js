@@ -21,7 +21,7 @@ const obj = {
     });
     if (controller === undefined) controller = new song_control(guild);
     if (args[0].startsWith('https://'))
-      setImmediate(() => controller.play(message, args));
+      setImmediate(() => controller.play(message, args).catch(e => {console.error(e)}));
     else
       find_song(message, args);
   },
@@ -54,22 +54,22 @@ class song_control {
     try {
       if (this.effect) {
         const str = new PassThrough();
-        ffmpeg(stream(link)).audioFilter(this.effect).format('mp3').output(str)
+        ffmpeg(stream(link).on('error', err => { throw err })).audioFilter(this.effect).format('mp3').output(str)
           .on('error', err => {
             message.channel.send('Wrong filter!');
             this.effect = null;
           }).run();
         this.dispatcher = this.connection.play(str, {volume: this.volume});
       } else
-        this.dispatcher = this.connection.play(stream(link).on('error', (err) => console.error(err)), {volume: this.volume});
+        this.dispatcher = this.connection.play(stream(link).on('error', err => { throw err }), {volume: this.volume});
     } catch (e) {
-      console.error(e);
-      await this.play(message, args)
+      console.error(console.error(e));
+      message.channel.send('There was an error processing your request');
+      return;
     }
 
-    message.channel.send('Playing ' + link);
-
     this.dispatcher.on('start', () => {
+      message.channel.send('Playing ' + link);
       console.log('song is now playing!');
       this.playing = true;
     });
