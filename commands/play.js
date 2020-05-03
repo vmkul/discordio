@@ -53,7 +53,7 @@ class song_control {
     if (!this.connection) this.connection = await message.member.voice.channel.join();
     try {
       if (this.effect) {
-        const str = new PassThrough();
+        const str = new PassThrough().on('error', err => { throw err });
         ffmpeg(stream(link).on('error', err => { throw err })).audioFilter(this.effect).format('mp3').output(str)
           .on('error', err => {
             message.channel.send('Wrong filter!');
