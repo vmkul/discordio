@@ -59,9 +59,10 @@ class song_control {
             message.channel.send('Wrong filter!');
             this.effect = null;
           }).run();
-        this.dispatcher = this.connection.play(str, {volume: this.volume});
+        this.dispatcher = this.connection.play(str, {volume: this.volume}).on('error', err => { throw err });
       } else
-        this.dispatcher = this.connection.play(stream(link).on('error', err => { throw err }), {volume: this.volume});
+        this.dispatcher = this.connection.play(stream(link).on('error', err => { throw err }), {volume: this.volume})
+          .on('error', err => { throw err });
     } catch (e) {
       console.error(console.error(e));
       message.channel.send('There was an error processing your request');
