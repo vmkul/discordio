@@ -2,12 +2,14 @@ const stream = require('youtube-audio-stream');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
 const search = require('youtube-search');
-ffmpeg.setFfmpegPath(ffmpegPath);
 const { PassThrough } = require('stream');
+const fs = require('fs');
+const { youtube_token } = require('../config.json');
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const opts = {
   maxResults: 10,
-  key: 'AIzaSyByAq1pQuO1Eb2I6hfYOmSJ4Wy7Ch3t3_w'
+  key: youtube_token,
 };
 
 const obj = {
@@ -15,11 +17,16 @@ const obj = {
   description: 'Play a song',
   guilds: [],
   async execute(message, args) {
-    const guild = message.guild.name;
+    let guild;
+    if (message.guild)
+      guild = message.guild.id;
+    else
+      guild = message;
     let controller = this.guilds.find(element => {
       return element.guild_name === guild;
     });
     if (controller === undefined) controller = new song_control(guild);
+    if (args.length === 0) return;
     if (args[0].startsWith('https://'))
       setImmediate(() => controller.play(message, args).catch(e => {console.error(e)}));
     else
@@ -29,19 +36,19 @@ const obj = {
 
 module.exports = obj;
 
-
 class song_control {
   constructor(guild_name) {
     this.guild_name = guild_name;
     this.stack = [];
     this.playing = false;
-    obj.guilds.push(this);
     this.volume = 1;
     this.effect = null;
+    this.reading = false;
+    obj.guilds.push(this);
   }
 
   async play(message, args) {
-    if (args.length === 0 || typeof args[0] !== 'string' || (!message.member.voice.channel && !this.connection)) return;
+    if (args.length === 0 || typeof args[0] !== 'string' || (!message.member.voice.channel && !this.connection) || this.reading) return;
 
     if (this.playing) {
       this.stack.push(args);
@@ -86,8 +93,10 @@ class song_control {
     });
 
     this.dispatcher.on('error', console.error);
+
   }
 }
+
 
 const find_song = (message, args, controller) => {
   search(args.join(' '), opts, function (err, results) {
