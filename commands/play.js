@@ -66,7 +66,6 @@ class song_control {
         this.effect = null;
       }).output(stream).run();
 
-    ytdl.on('error', () => console.log('ytdl error'));
     if (!this.connection) this.connection = await message.member.voice.channel.join();
     try {
       this.dispatcher = this.connection.play(stream.on('error', err => { throw err }), {volume: this.volume})
