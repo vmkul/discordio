@@ -8,7 +8,7 @@ module.exports = {
     message.member.voice.channel.leave();
     const controller = findC(message, client);
     if (controller === undefined) return;
-    if (controller) {
+    if (controller.connection) {
       controller.connection.disconnect();
       controller.connection = false;
       if (controller.dispatcher && controller.playing) {

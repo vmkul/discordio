@@ -57,18 +57,22 @@ class song_control {
 
     const link = args[0];
     const stream = new PassThrough();
+    const effect = new PassThrough();
 
-    if (!this.effect)
-      ffmpeg(ytdl(link)).outputFormat('mp3').on('error', () => console.log('ffmpeg error')).output(stream).run();
-    else
-      ffmpeg(ytdl(link)).outputFormat('mp3').audioFilter(this.effect).on('error', () => {
+    ffmpeg(ytdl(link)).outputFormat('mp3').on('error', () => console.log('ffmpeg error')).output(stream).run();
+
+    if (this.effect) {
+      ffmpeg(stream).outputFormat('mp3').audioFilter(this.effect).on('error', err => {
         message.reply('Wrong filter!');
+        console.log(err);
         this.effect = null;
-      }).output(stream).run();
+      }).output(effect).run();
+    }
 
     if (!this.connection) this.connection = await message.member.voice.channel.join();
     try {
-      this.dispatcher = this.connection.play(stream.on('error', err => { throw err }), {volume: this.volume})
+      let str = this.effect ? effect : stream;
+      this.dispatcher = this.connection.play(str.on('error', err => { throw err }), {volume: this.volume})
           .on('error', err => { throw err });
     } catch (e) {
       console.error(e);
