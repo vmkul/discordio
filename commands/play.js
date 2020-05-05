@@ -59,16 +59,20 @@ class song_control {
     const stream = new PassThrough();
 
     if (!this.effect)
-      ffmpeg(ytdl(link)).outputFormat('mp3').output(stream).run();
+      ffmpeg(ytdl(link)).outputFormat('mp3').on('error', () => console.log('ffmpeg error')).output(stream).run();
     else
-      ffmpeg(ytdl(link)).outputFormat('mp3').audioFilter(this.effect).output(stream).run();
+      ffmpeg(ytdl(link)).outputFormat('mp3').audioFilter(this.effect).on('error', () => {
+        message.reply('Wrong filter!');
+        this.effect = null;
+      }).output(stream).run();
 
+    ytdl.on('error', () => console.log('ytdl error'));
     if (!this.connection) this.connection = await message.member.voice.channel.join();
     try {
       this.dispatcher = this.connection.play(stream.on('error', err => { throw err }), {volume: this.volume})
           .on('error', err => { throw err });
     } catch (e) {
-      console.error(console.error(e));
+      console.error(e);
       message.channel.send('There was an error processing your request');
       return;
     }
