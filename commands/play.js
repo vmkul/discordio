@@ -69,7 +69,8 @@ class song_control {
       }).output(effect).run();
     }
 
-    if (!this.connection) this.connection = await message.member.voice.channel.join();
+    this.connection = await message.member.voice.channel.join().catch(e => console.log(e));
+
     try {
       let str = this.effect ? effect : stream;
       this.dispatcher = this.connection.play(str.on('error', err => { throw err }), {volume: this.volume})
