@@ -7,6 +7,7 @@ module.exports = {
     const controller = findC(message, client);
     if (controller === undefined || args.length === 0) return;
     controller.effect = args[0];
+    if (args[0] === 'null') controller.effect = null;
     message.react('👍🏼').catch(err => console.log(err));
   },
 };
