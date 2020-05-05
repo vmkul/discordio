@@ -1,9 +1,8 @@
-const stream = require('youtube-audio-stream');
+const ytdl = require('ytdl-core');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
 const search = require('youtube-search');
 const { PassThrough } = require('stream');
-const fs = require('fs');
 const { youtube_token } = require('../config.json');
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -57,18 +56,16 @@ class song_control {
     }
 
     const link = args[0];
+    const stream = new PassThrough();
+
+    if (!this.effect)
+      ffmpeg(ytdl(link)).outputFormat('mp3').output(stream).run();
+    else
+      ffmpeg(ytdl(link)).outputFormat('mp3').audioFilter(this.effect).output(stream).run();
+
     if (!this.connection) this.connection = await message.member.voice.channel.join();
     try {
-      if (this.effect) {
-        const str = new PassThrough().on('error', err => { throw err });
-        ffmpeg(stream(link).on('error', err => { throw err })).audioFilter(this.effect).format('mp3').output(str)
-          .on('error', err => {
-            message.channel.send('Wrong filter!');
-            this.effect = null;
-          }).run();
-        this.dispatcher = this.connection.play(str, {volume: this.volume}).on('error', err => { throw err });
-      } else
-        this.dispatcher = this.connection.play(stream(link).on('error', err => { throw err }), {volume: this.volume})
+      this.dispatcher = this.connection.play(stream.on('error', err => { throw err }), {volume: this.volume})
           .on('error', err => { throw err });
     } catch (e) {
       console.error(console.error(e));
@@ -97,10 +94,10 @@ class song_control {
   }
 }
 
-
 const find_song = (message, args, controller) => {
   search(args.join(' '), opts, function (err, results) {
     if (err) return console.log(err);
+    if (results.length === 0) return;
     if (results[0].kind !== 'youtube#video') return;
     const link = results[0].link;
     obj.execute(message, [link]).catch(err => console.log(err));
