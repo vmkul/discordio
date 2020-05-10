@@ -21,7 +21,7 @@ module.exports = {
   const audio = connection.receiver.createStream(user.value, { mode: 'pcm' });
 
   const str = new PassThrough();
-  ffmpeg(audio).inputFormat('s16le').outputFormat('mp3').audioFilter('atempo=2').output(str)
+  ffmpeg(audio).inputFormat('s16le').outputFormat('mp3').audioFilter('atempo=2,rubberband=pitch=2').output(str)
     .on('end', function() {
     console.log('Finished processing');
     })

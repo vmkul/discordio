@@ -106,7 +106,7 @@ const find_song = (message, args) => {
   search(args.join(' '), opts, function (err, results) {
     let i = 0;
     if (err) return console.log(err);
-    if (results.length === 0 || typeof results[0] !== 'string') message.reply('Couldn\'t find anything!');
+    if (results.length === 0) message.reply('Couldn\'t find anything!');
     while (results[i].kind !== 'youtube#video' && i < results.length) {
       i++;
     }
