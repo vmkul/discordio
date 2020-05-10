@@ -102,12 +102,15 @@ class song_control {
   }
 }
 
-const find_song = (message, args, controller) => {
+const find_song = (message, args) => {
   search(args.join(' '), opts, function (err, results) {
+    let i = 0;
     if (err) return console.log(err);
-    if (results.length === 0) return;
-    if (results[0].kind !== 'youtube#video') return;
-    const link = results[0].link;
+    if (results.length === 0 || typeof results[0] !== 'string') message.reply('Couldn\'t find anything!');
+    while (results[i].kind !== 'youtube#video' && i < results.length) {
+      i++;
+    }
+    const link = results[i].link;
     obj.execute(message, [link]).catch(err => console.log(err));
   });
 }
