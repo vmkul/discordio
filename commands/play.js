@@ -56,6 +56,7 @@ class song_control {
     }
 
     const link = args[0];
+
     const stream = new PassThrough();
     const effect = new PassThrough();
 
@@ -92,7 +93,7 @@ class song_control {
       this.playing = false;
       if (this.stack.length !== 0) {
         const arg = this.stack.shift();
-        obj.execute(message, arg);
+        setImmediate(() => obj.execute(message, arg));
       }
       return true;
     });
@@ -107,7 +108,11 @@ const find_song = (message, args) => {
     let i = 0;
     if (err) return console.log(err);
     if (results.length === 0) message.reply('Couldn\'t find anything!');
-    while (results[i].kind !== 'youtube#video' && i < results.length) {
+    while (results[i].kind !== 'youtube#video' && i < results.length && typeof results[i].link === 'string') {
+      if (i > 10) {
+        message.reply('Something happened!');
+        return;
+      }
       i++;
     }
     const link = results[i].link;
