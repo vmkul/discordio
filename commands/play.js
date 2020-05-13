@@ -60,12 +60,16 @@ class song_control {
     const stream = new PassThrough();
     const effect = new PassThrough();
 
-    ffmpeg(ytdl(link)).outputFormat('mp3').on('error', () => console.log('ffmpeg error')).output(stream).run();
+    ffmpeg(ytdl(link)).outputFormat('mp3').on('error', () => {
+      console.log('ffmpeg error');
+      setImmediate(() => this.dispatcher.end());
+    }).output(stream).run();
 
     if (this.effect) {
       ffmpeg(stream).outputFormat('mp3').audioFilter(this.effect).on('error', err => {
         message.reply('Wrong filter!');
         console.log(err);
+        setImmediate(() => this.dispatcher.end());
         this.effect = null;
       }).output(effect).run();
     }
