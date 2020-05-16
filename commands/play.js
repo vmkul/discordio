@@ -98,7 +98,7 @@ class song_control {
       console.log('song has finished playing!');
       this.playing = false;
       if (this.cycling) {
-        setImmediate(() => obj.execute(message, [this.gen.next()]));
+        setImmediate(() => obj.execute(message, [this.gen.next().value]));
       }
       if (this.stack.length !== 0) {
         const arg = this.stack.shift();

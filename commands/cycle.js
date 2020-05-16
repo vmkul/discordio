@@ -8,7 +8,10 @@ module.exports = {
     if (controller === undefined) return;
     if (controller.stack.length !== 0) {
       if (args.length !== 0 && controller.cycling) {
-        controller.cycling = false;
+        if (args[0] === 'stop')
+          controller.cycling = false;
+        else
+          return;
         message.react('👍🏼').catch(err => console.log(err));
         return;
       }
