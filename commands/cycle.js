@@ -13,6 +13,7 @@ module.exports = {
         return;
       }
       controller.cycling = true;
+      message.reply('Now cycling the queue');
     }
   },
 };
