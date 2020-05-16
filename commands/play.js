@@ -43,6 +43,7 @@ class song_control {
     this.volume = 1;
     this.effect = null;
     this.reading = false;
+    this.cycling = false;
     obj.guilds.push(this);
   }
 
@@ -51,6 +52,7 @@ class song_control {
 
     if (this.playing) {
       this.stack.push(args);
+      this.gen = select_track(this.stack);
       message.channel.send('Queued ' + args.join(' '));
       return;
     }
@@ -95,11 +97,13 @@ class song_control {
     this.dispatcher.on('finish', () => {
       console.log('song has finished playing!');
       this.playing = false;
+      if (this.cycling) {
+        setImmediate(() => obj.execute(message, this.gen.next()));
+      }
       if (this.stack.length !== 0) {
         const arg = this.stack.shift();
         setImmediate(() => obj.execute(message, arg));
       }
-      return true;
     });
 
     this.dispatcher.on('error', console.error);
@@ -122,4 +126,13 @@ const find_song = (message, args) => {
     const link = results[i].link;
     obj.execute(message, [link]).catch(err => console.log(err));
   });
+}
+
+function* select_track(queue) {
+  let i = 0;
+  while (true) {
+    yield queue[i];
+    i++;
+    if (i === queue.length) i = 0;
+  }
 }
