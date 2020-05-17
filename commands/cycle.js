@@ -7,11 +7,8 @@ module.exports = {
     const controller = findC(message, client);
     if (controller === undefined) return;
     if (controller.stack.length !== 0) {
-      if (args.length !== 0 && controller.cycling) {
-        if (args[0] === 'stop')
-          controller.cycling = false;
-        else
-          return;
+      if (controller.cycling) {
+        controller.cycling = false;
         message.react('👍🏼').catch(err => console.log(err));
         return;
       }

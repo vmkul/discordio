@@ -5,6 +5,7 @@ const search = require('youtube-search');
 const { PassThrough } = require('stream');
 const { youtube_token } = require('../config.json');
 ffmpeg.setFfmpegPath(ffmpegPath);
+const Discord = require('discord.js');
 
 const opts = {
   maxResults: 10,
@@ -26,10 +27,7 @@ const obj = {
     });
     if (controller === undefined) controller = new song_control(guild);
     if (args.length === 0) return;
-    if (args[0].startsWith('https://'))
-      setImmediate(() => controller.play(message, args).catch(e => {console.error(e)}));
-    else
-      find_song(message, args);
+    find_song(message, args, controller);
   },
 };
 
@@ -53,7 +51,8 @@ class song_control {
     if (this.playing) {
       this.stack.push(args);
       this.gen = select_track(this.stack);
-      message.channel.send('Queued ' + args.join(' '));
+      message.channel.send('Queued');
+      message.channel.send(args[1]);
       return;
     }
 
@@ -89,7 +88,8 @@ class song_control {
     }
 
     this.dispatcher.on('start', () => {
-      message.channel.send('Playing ' + link);
+      message.channel.send('Playing');
+      message.channel.send(args[1]);
       console.log('song is now playing!');
       this.playing = true;
     });
@@ -98,7 +98,8 @@ class song_control {
       console.log('song has finished playing!');
       this.playing = false;
       if (this.cycling) {
-        setImmediate(() => obj.execute(message, [this.gen.next().value]));
+        setImmediate(() => obj.execute(message, this.gen.next().value));
+        return;
       }
       if (this.stack.length !== 0) {
         const arg = this.stack.shift();
@@ -111,8 +112,15 @@ class song_control {
   }
 }
 
-const find_song = (message, args) => {
-  search(args.join(' '), opts, function (err, results) {
+const find_song = (message, args, controller) => {
+  let term = '';
+  if (args[0].startsWith('https://')) {
+    const index = args[0].indexOf('=');
+    term = args[0].slice(index + 1, args[0].length);
+  } else {
+    term = args.join(' ');
+  }
+  search(term, opts, function (err, results) {
     let i = 0;
     if (err) return console.log(err);
     if (results.length === 0) message.reply('Couldn\'t find anything!');
@@ -123,8 +131,9 @@ const find_song = (message, args) => {
       }
       i++;
     }
+    const embed = create_Embed(results[i].title, results[i].link, results[i].thumbnails.default.url, results[i].description, message.author.username, message.author.avatarURL());
     const link = results[i].link;
-    obj.execute(message, [link]).catch(err => console.log(err));
+    setImmediate(() => controller.play(message, [link, embed]).catch(e => {console.error(e)}));
   });
 }
 
@@ -136,3 +145,16 @@ function* select_track(queue) {
     if (i === queue.length) i = 0;
   }
 }
+
+
+
+const create_Embed = (title, url, thumbnail, description, author_name, author_avatar) => {
+  return new Discord.MessageEmbed()
+    .setColor('#9deb70')
+    .setTitle(title)
+    .setURL(url)
+    .setAuthor(author_name, author_avatar)
+    .setDescription(description)
+    .setThumbnail(thumbnail);
+};
+
