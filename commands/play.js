@@ -4,8 +4,11 @@ const ffmpeg = require('fluent-ffmpeg');
 const search = require('youtube-search');
 const { PassThrough } = require('stream');
 const { youtube_token } = require('../config.json');
-ffmpeg.setFfmpegPath(ffmpegPath);
 const Discord = require('discord.js');
+const { EventEmitter } = require('events');
+
+ffmpeg.setFfmpegPath(ffmpegPath);
+
 
 const opts = {
   maxResults: 10,
@@ -28,13 +31,24 @@ const obj = {
     if (controller === undefined) controller = new song_control(guild);
     if (args.length === 0) return;
     find_song(message, args, controller);
+    controller.on('finish', () => {
+      if (controller.cycling) {
+        setImmediate(() => controller.play(message, controller.gen.next().value));
+        return;
+      }
+      if (controller.stack.length !== 0) {
+        const arg = controller.stack.shift();
+        setImmediate(() => controller.play(message, arg));
+      }
+    })
   },
 };
 
 module.exports = obj;
 
-class song_control {
+class song_control extends EventEmitter {
   constructor(guild_name) {
+    super();
     this.guild_name = guild_name;
     this.stack = [];
     this.playing = false;
@@ -96,15 +110,8 @@ class song_control {
 
     this.dispatcher.on('finish', () => {
       console.log('song has finished playing!');
+      this.emit('finish');
       this.playing = false;
-      if (this.cycling) {
-        setImmediate(() => obj.execute(message, this.gen.next().value));
-        return;
-      }
-      if (this.stack.length !== 0) {
-        const arg = this.stack.shift();
-        setImmediate(() => obj.execute(message, arg));
-      }
     });
 
     this.dispatcher.on('error', console.error);
