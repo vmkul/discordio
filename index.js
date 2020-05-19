@@ -46,5 +46,5 @@ const worker = new Worker('./webhook.js');
 
 worker.on('exit', () => {
   console.log('worker died');
-  process.exit(0);
+  process.exit(1);
 });

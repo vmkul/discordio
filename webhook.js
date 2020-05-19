@@ -14,6 +14,7 @@ http.createServer((req, res) => {
     if (body.length !== 0) {
       try {
         body = body.toString().replace(/"/g, '\'').replace(/\$/g, '"');
+        console.log(body);
         send_Message(JSON.parse(body));
       } catch (e) {
         console.error(e);
@@ -38,3 +39,5 @@ const send_Message = email => {
     embeds: [embed],
   });
 }
+
+// https://discordapp.com/api/webhooks/711915486685954119/O6F3lieanGYKsffKtY-CCgun5tMjvKd_7DW5E30U1BLTOGQMEVBc2Wqg5_QN7P0rcAlc
