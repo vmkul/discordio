@@ -13,9 +13,12 @@ http.createServer((req, res) => {
   req.on('end', () => {
     if (body.length !== 0) {
       try {
-        body = body.toString().replace(/"/g, '\'').replace(/\$/g, '"');
-        console.log(body);
-        send_Message(JSON.parse(body));
+        const parsed = body.toString();
+        const content = parsed.substring(0, parsed.indexOf('$'));
+        const info = parsed.substring(parsed.indexOf('$') + 1, parsed.length).replace(/"/g, '\'').replace(/\$/g, '"');
+        console.log(content);
+        console.log(info);
+        send_Message(JSON.parse(info), content);
       } catch (e) {
         console.error(e);
       }
@@ -26,12 +29,12 @@ http.createServer((req, res) => {
   });
 }).listen(PORT);
 
-const send_Message = email => {
+const send_Message = (info, content) => {
   const webhookClient = new Discord.WebhookClient(webhook_id, webhook_token);
   const embed = new Discord.MessageEmbed()
-    .setTitle(email.subject)
-    .setAuthor(email.from_name)
-    .setDescription(email.body)
+    .setTitle(info.subject)
+    .setAuthor(info.from_name)
+    .setDescription(content)
     .setColor('#a504bf');
   webhookClient.send('@everyone', {
     username: 'Tarkov BOT',
