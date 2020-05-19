@@ -5,7 +5,7 @@ const PORT = process.env.PORT || 80;
 
 http.createServer((req, res) => {
   let body = '';
-
+  console.log(req.headers);
   req.on('data', chunk => {
     body += chunk;
   });
@@ -15,10 +15,9 @@ http.createServer((req, res) => {
       try {
         const content = body.toString();
         const info = {
-          subject: req.getHeader('subject'),
-          from_name: req.getHeader('from_name')
+          subject: req.headers['subject'],
+          from_name: req.headers['from_name']
         }
-        console.log(info);
         send_Message(info, content);
       } catch (e) {
         console.error(e);
