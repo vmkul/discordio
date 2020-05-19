@@ -22,7 +22,6 @@ http.createServer((req, res) => {
     console.log('Got a POST message');
     res.writeHead(200);
     res.end('Okay');
-    process.exit(0);
   });
 }).listen(PORT);
 
