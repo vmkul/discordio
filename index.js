@@ -1,9 +1,6 @@
 'use strict';
 
-const express = require('express');
-const path = require('path');
-const PORT = process.env.PORT || 5000;
-
+const { Worker } = require('worker_threads');
 const Discord = require('discord.js');
 const fs = require('fs');
 const client = new Discord.Client();
@@ -44,7 +41,10 @@ client.on('message', async message => {
 });
 
 client.login(token);
-express()
-  .use(express.static(path.join(__dirname, 'public')))
-  .get('/', (req, res) => res.send('I am discordio bot'))
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`));
+
+const worker = new Worker('./webhook.js');
+
+worker.on('exit', () => {
+  console.log('worker died');
+  process.exit(0);
+});
