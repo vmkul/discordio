@@ -13,12 +13,13 @@ http.createServer((req, res) => {
   req.on('end', () => {
     if (body.length !== 0) {
       try {
-        const parsed = body.toString();
-        const content = parsed.substring(0, parsed.indexOf('$'));
-        const info = parsed.substring(parsed.indexOf('$') + 1, parsed.length).replace(/"/g, '\'').replace(/\$/g, '"');
-        console.log(content);
+        const content = body.toString();
+        const info = {
+          subject: req.getHeader('subject'),
+          from_name: req.getHeader('from_name')
+        }
         console.log(info);
-        send_Message(JSON.parse(info), content);
+        send_Message(info, content);
       } catch (e) {
         console.error(e);
       }
