@@ -23,7 +23,7 @@ http.createServer((req, res) => {
         }
 
         while (img !== null) {
-          img = regExp.exec(str);
+          img = regExp.exec(content);
           if (img) images.push(img[0]);
         }
 
@@ -43,8 +43,8 @@ const send_Message = (info, content, images) => {
     .setTitle(info.subject)
     .setAuthor(info.from_name)
     .setDescription(content)
-    .setColor('#a504bf')
-    .setImage(images[0]);
+    .setColor('#a504bf');
+  if (images.length !== 0) embed.setImage(images[0]);
   webhookClient.send('@everyone', {
     embeds: [embed],
   });
