@@ -5,7 +5,6 @@ const PORT = process.env.PORT || 80;
 
 http.createServer((req, res) => {
   let body = '';
-  console.log(req.headers);
   req.on('data', chunk => {
     body += chunk;
   });
@@ -13,34 +12,41 @@ http.createServer((req, res) => {
   req.on('end', () => {
     if (body.length !== 0) {
       try {
+        console.log('Got a POST message');
         const content = body.toString();
+        const regExp = /(https?:\/\/.*\.(?:png|jpg))/g;
+        const images = [];
+        let img;
         const info = {
           subject: req.headers['subject'],
           from_name: req.headers['from_name']
         }
-        send_Message(info, content);
+
+        while (img !== null) {
+          img = regExp.exec(str);
+          if (img) images.push(img[0]);
+        }
+
+        send_Message(info, content, images);
       } catch (e) {
         console.error(e);
       }
     }
-    console.log('Got a POST message');
     res.writeHead(200);
     res.end('Okay');
   });
 }).listen(PORT);
 
-const send_Message = (info, content) => {
+const send_Message = (info, content, images) => {
   const webhookClient = new Discord.WebhookClient(webhook_id, webhook_token);
   const embed = new Discord.MessageEmbed()
     .setTitle(info.subject)
     .setAuthor(info.from_name)
     .setDescription(content)
-    .setColor('#a504bf');
+    .setColor('#a504bf')
+    .setImage(images[0]);
   webhookClient.send('@everyone', {
-    username: 'Tarkov BOT',
-    avatarURL: 'https://toppng.com/uploads/preview/escape-from-tarkov-logo-11563187295owl0loeixb.png',
     embeds: [embed],
   });
 }
 
-// https://discordapp.com/api/webhooks/711915486685954119/O6F3lieanGYKsffKtY-CCgun5tMjvKd_7DW5E30U1BLTOGQMEVBc2Wqg5_QN7P0rcAlc
