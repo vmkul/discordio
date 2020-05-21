@@ -45,7 +45,7 @@ const send_Message = (info, content, images) => {
     .setDescription(content)
     .setColor('#a504bf');
   if (images.length !== 0) embed.setImage(images[0]);
-  webhookClient.send('@everyone', {
+  webhookClient.send('', {
     embeds: [embed],
   });
 }
