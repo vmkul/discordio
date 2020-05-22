@@ -20,6 +20,7 @@ const obj = {
   description: 'Play a song',
   guilds: [],
   async execute(message, args) {
+    if (args.length === 0) return;
     let guild;
     if (message.guild)
       guild = message.guild.id;
@@ -29,18 +30,7 @@ const obj = {
       return element.guild_name === guild;
     });
     if (controller === undefined) controller = new song_control(guild);
-    if (args.length === 0) return;
     find_song(message, args, controller);
-    controller.on('finish', () => {
-      if (controller.cycling) {
-        setImmediate(() => controller.play(message, controller.gen.next().value));
-        return;
-      }
-      if (controller.stack.length !== 0) {
-        const arg = controller.stack.shift();
-        setImmediate(() => controller.play(message, arg));
-      }
-    })
   },
 };
 
@@ -50,27 +40,37 @@ class song_control extends EventEmitter {
   constructor(guild_name) {
     super();
     this.guild_name = guild_name;
-    this.stack = [];
+    this.queue = [];
     this.playing = false;
     this.volume = 1;
     this.effect = null;
     this.reading = false;
     this.cycling = false;
+    this.on('finish', () => {
+      if (this.cycling) {
+        setImmediate(() => this.play(this.gen.next().value));
+        return;
+      }
+      if (this.queue.length !== 0) {
+        const song = this.queue.shift();
+        setImmediate(() => this.play(song));
+      }
+    });
     obj.guilds.push(this);
   }
 
-  async play(message, args) {
-    if (args.length === 0 || typeof args[0] !== 'string' || (!message.member.voice.channel && !this.connection) || this.reading) return;
+  async play(song) {
+    if (typeof song.link !== 'string' || (!song.message.member.voice.channel && !this.connection) || this.reading) return;
 
     if (this.playing) {
-      this.stack.push(args);
-      this.gen = select_track(this.stack);
-      message.channel.send('Queued');
-      message.channel.send(args[1]);
+      this.queue.push(song);
+      this.gen = select_track(this.queue);
+      song.message.channel.send('Queued');
+      await song.message.channel.send(song.embed);
       return;
     }
 
-    const link = args[0];
+    const link = song.link;
 
     const stream = new PassThrough();
     const effect = new PassThrough();
@@ -82,14 +82,14 @@ class song_control extends EventEmitter {
 
     if (this.effect) {
       ffmpeg(stream).outputFormat('mp3').audioFilter(this.effect).on('error', err => {
-        message.reply('Wrong filter!');
+        song.message.reply('Wrong filter!');
         console.log(err);
         setImmediate(() => this.dispatcher.end());
         this.effect = null;
       }).output(effect).run();
     }
 
-    this.connection = await message.member.voice.channel.join().catch(e => console.log(e));
+    this.connection = await song.message.member.voice.channel.join().catch(e => console.log(e));
 
     try {
       let str = this.effect ? effect : stream;
@@ -97,13 +97,13 @@ class song_control extends EventEmitter {
           .on('error', err => { throw err });
     } catch (e) {
       console.error(e);
-      message.channel.send('There was an error processing your request');
+      song.message.channel.send('There was an error processing your request');
       return;
     }
 
     this.dispatcher.on('start', () => {
-      message.channel.send('Playing');
-      message.channel.send(args[1]);
+      song.message.channel.send('Playing');
+      song.message.channel.send(song.embed);
       console.log('song is now playing!');
       this.playing = true;
     });
@@ -115,7 +115,6 @@ class song_control extends EventEmitter {
     });
 
     this.dispatcher.on('error', console.error);
-
   }
 }
 
@@ -140,7 +139,7 @@ const find_song = (message, args, controller) => {
     }
     const embed = create_Embed(results[i].title, results[i].link, results[i].thumbnails.default.url, results[i].description, message.author.username, message.author.avatarURL());
     const link = results[i].link;
-    setImmediate(() => controller.play(message, [link, embed]).catch(e => {console.error(e)}));
+    setImmediate(() => controller.play({ link: link, embed: embed, message: message }).catch(e => {console.error(e)}));
   });
 }
 
@@ -152,8 +151,6 @@ function* select_track(queue) {
     if (i === queue.length) i = 0;
   }
 }
-
-
 
 const create_Embed = (title, url, thumbnail, description, author_name, author_avatar) => {
   return new Discord.MessageEmbed()

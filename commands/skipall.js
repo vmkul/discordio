@@ -8,7 +8,7 @@ module.exports = {
     if (controller === undefined) return;
     if (controller.dispatcher) {
       if (controller.playing) controller.dispatcher.end();
-      controller.stack = [];
+      controller.queue = [];
       message.react('👍🏼').catch(err => console.log(err));
     }
   },
