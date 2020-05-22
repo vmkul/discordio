@@ -20,7 +20,6 @@ const obj = {
   description: 'Play a song',
   guilds: [],
   async execute(message, args) {
-    if (args.length === 0) return;
     let guild;
     if (message.guild)
       guild = message.guild.id;
@@ -30,6 +29,7 @@ const obj = {
       return element.guild_name === guild;
     });
     if (controller === undefined) controller = new song_control(guild);
+    if (args.length === 0) return;
     find_song(message, args, controller);
   },
 };
