@@ -46,6 +46,7 @@ class song_control extends EventEmitter {
     this.effect = null;
     this.reading = false;
     this.cycling = false;
+    this.timer = null;
     this.on('finish', () => {
       if (this.cycling) {
         setImmediate(() => this.play(this.gen.next().value));
@@ -54,6 +55,10 @@ class song_control extends EventEmitter {
       if (this.queue.length !== 0) {
         const song = this.queue.shift();
         setImmediate(() => this.play(song));
+      } else {
+        this.timer = setTimeout(() => {
+          if (this.connection) this.connection.disconnect();
+        }, 9e5);
       }
     });
     obj.guilds.push(this);
@@ -61,6 +66,10 @@ class song_control extends EventEmitter {
 
   async play(song) {
     if (typeof song.link !== 'string' || (!song.message.member.voice.channel && !this.connection) || this.reading) return;
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
 
     if (this.playing) {
       this.queue.push(song);
