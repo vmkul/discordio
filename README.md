@@ -1,5 +1,5 @@
 ﻿# Computer-based-training bot welcomes you! 🐱
-*CBT* bot is a multifunctional bot for your Discord server ✨
+*CBT* bot is a multifunctional bot for your Discord server ✨  
 ![](https://i.ibb.co/123WyPJ/Screenshot-40.png)
 
 # Play music from YouTube 📻
