@@ -65,6 +65,7 @@ class song_control extends EventEmitter {
     }
 
     if (this.playing) {
+      if (this.queue.length > 200) return song.message.reply('The queue is too long!');
       this.queue.push(song);
       this.gen = select_track(this.queue);
       song.message.channel.send('Queued');
@@ -123,17 +124,16 @@ class song_control extends EventEmitter {
 const find_song = (message, args, controller) => {
   let term;
   if (args[0].startsWith('https://www.youtube.com/watch?v=')) {
-    const index = args[0].indexOf('=');
     term = {
       pageStart: 1,
       pageEnd: 3,
-      videoId: args[0].slice(index + 1, args[0].length),
+      videoId: args[0].slice(32, 44),
     }
   } else if (args[0].startsWith('https://youtu.be/')) {
     term = {
       pageStart: 1,
       pageEnd: 3,
-      videoId: args[0].slice(17, args[0].length),
+      videoId: args[0].slice(17, 28),
     }
   }
   else {
