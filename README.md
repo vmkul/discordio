@@ -14,6 +14,9 @@ Wanna dig up some short info without opening your browser? Use `!wiki` command!
 ## Set-up a webhook for your Gmail  📨
 Want to forward your emails straight to a discord channel? `!hook` command is coming soon.
 
+## Get motivated by reading a wise quote 🐺
+Try out the new `!quote` command. No doubt it will inspire you to do great things!
+
 ## And many more fun  and useful commands  🤡
 See all available commands by typing `!help`
 
