@@ -22,6 +22,7 @@
   "homepage": "https://github.com/vmkul/disc-bot#readme",
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.0.20",
+    "canvas": "^2.6.1",
     "discord.js": "^12.2.0",
     "eslint": "^6.8.0",
     "ffmpeg-static": "^4.1.1",
