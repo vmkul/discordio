@@ -30,7 +30,7 @@
     "ibm-watson": "^5.5.0",
     "node-lame": "^1.2.2",
     "node-opus": "^0.3.3",
-    "youtube-search": "^1.1.4",
+    "yt-search": "^1.1.2",
     "ytdl-core": "^2.1.1"
   }
 }

@@ -1,19 +1,12 @@
 const ytdl = require('ytdl-core');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
-const search = require('youtube-search');
+const yts = require('yt-search');
 const { PassThrough } = require('stream');
-const { youtube_token } = require('../config.json');
 const Discord = require('discord.js');
 const { EventEmitter } = require('events');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
-
-
-const opts = {
-  maxResults: 10,
-  key: youtube_token,
-};
 
 const obj = {
   name: 'play',
@@ -128,26 +121,38 @@ class song_control extends EventEmitter {
 }
 
 const find_song = (message, args, controller) => {
-  let term = '';
-  if (args[0].startsWith('https://')) {
+  let term;
+  if (args[0].startsWith('https://www.youtube.com/watch?v=')) {
     const index = args[0].indexOf('=');
-    term = args[0].slice(index + 1, args[0].length);
-  } else {
+    term = {
+      pageStart: 1,
+      pageEnd: 3,
+      videoId: args[0].slice(index + 1, args[0].length),
+    }
+  } else if (args[0].startsWith('https://youtu.be/')) {
+    term = {
+      pageStart: 1,
+      pageEnd: 3,
+      videoId: args[0].slice(17, args[0].length),
+    }
+  }
+  else {
     term = args.join(' ');
   }
-  search(term, opts, function (err, results) {
-    let i = 0;
-    if (err) return console.log(err);
-    if (results.length === 0) message.reply('Couldn\'t find anything!');
-    while (results[i].kind !== 'youtube#video' && i < results.length && typeof results[i].link === 'string') {
-      if (i > 10) {
-        message.reply('Something happened!');
-        return;
-      }
-      i++;
+  yts(term, (err, results) => {
+    let video;
+    if (err) {
+      message.reply('There was an error!');
+      return console.log(err);
     }
-    const embed = create_Embed(results[i].title, results[i].link, results[i].thumbnails.default.url, results[i].description, message.author.username, message.author.avatarURL());
-    const link = results[i].link;
+    if (results.videos) {
+      if (results.videos.length === 0) return message.reply('Couldn\'t find anything!');
+      video = results.videos[0];
+    }
+    else
+      video = results;
+    const embed = create_Embed(video.title, video.url, video.thumbnail, video.description, message.author.username, message.author.avatarURL());
+    const link = video.url;
     setImmediate(() => controller.play({ link: link, embed: embed, message: message }).catch(e => {console.error(e)}));
   });
 }
