@@ -1,7 +1,22 @@
+'use strict';
+
 const http = require('http');
 const Discord = require('discord.js');
-const { webhook_id, webhook_token } = require('./config.json');
+const { webhookId, webhookToken } = require('./config.json');
 const PORT = process.env.PORT || 80;
+
+const sendMessage = (info, content, images) => {
+  const webhookClient = new Discord.WebhookClient(webhookId, webhookToken);
+  const embed = new Discord.MessageEmbed()
+    .setTitle(info.subject)
+    .setAuthor(info.fromName)
+    .setDescription(content)
+    .setColor('#a504bf');
+  if (images.length !== 0) embed.setImage(images[0]);
+  webhookClient.send('', {
+    embeds: [embed],
+  });
+};
 
 http.createServer((req, res) => {
   let body = '';
@@ -19,15 +34,15 @@ http.createServer((req, res) => {
         let img;
         const info = {
           subject: req.headers['subject'],
-          from_name: req.headers['from_name']
-        }
+          fromName: req.headers['from_name']
+        };
 
         while (img !== null) {
           img = regExp.exec(content);
           if (img) images.push(img[0]);
         }
 
-        send_Message(info, content, images);
+        sendMessage(info, content, images);
       } catch (e) {
         console.error(e);
       }
@@ -37,16 +52,4 @@ http.createServer((req, res) => {
   });
 }).listen(PORT);
 
-const send_Message = (info, content, images) => {
-  const webhookClient = new Discord.WebhookClient(webhook_id, webhook_token);
-  const embed = new Discord.MessageEmbed()
-    .setTitle(info.subject)
-    .setAuthor(info.from_name)
-    .setDescription(content)
-    .setColor('#a504bf');
-  if (images.length !== 0) embed.setImage(images[0]);
-  webhookClient.send('', {
-    embeds: [embed],
-  });
-}
 

@@ -6,7 +6,8 @@ const fs = require('fs');
 const client = new Discord.Client();
 const { prefix, token } = require('./config.json');
 client.commands = new Discord.Collection();
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
+const commandFiles = fs.readdirSync('./commands')
+  .filter(file => file.endsWith('.js'));
 
 for (const file of commandFiles) {
   const command = require(`./commands/${file}`);
@@ -16,7 +17,7 @@ for (const file of commandFiles) {
 client.once('ready', () => {
   const keys = client.guilds.cache.keys();
   const play = client.commands.get('play');
-  for (let id of keys) {
+  for (const id of keys) {
     play.execute(id, []);
   }
   console.log('Ready!');

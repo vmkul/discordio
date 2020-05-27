@@ -1,11 +1,13 @@
+'use strict';
+
 const https = require('https');
 const findC = require('../find_con');
 const TextToSpeechV1 = require('ibm-watson/text-to-speech/v1');
 const { IamAuthenticator } = require('ibm-watson/auth');
-const { IBM_token, IBM_url } = require('../config.json');
+const { IBMToken, IBMUrl } = require('../config.json');
 let m, c;
 
-const get_wiki = (link, cb) => {
+const getWiki = (link, cb) => {
   https.get(link, res => {
     const { statusCode } = res;
     const contentType = res.headers['content-type'];
@@ -28,7 +30,7 @@ const get_wiki = (link, cb) => {
 
     res.setEncoding('utf8');
     let rawData = '';
-    res.on('data', (chunk) => { rawData += chunk; });
+    res.on('data', chunk => { rawData += chunk; });
     res.on('end', () => {
       try {
         const parsedData = JSON.parse(rawData);
@@ -38,14 +40,14 @@ const get_wiki = (link, cb) => {
         cb(e);
       }
     });
-  }).on('error', (e) => {
+  }).on('error', e => {
     console.error(`Got error: ${e.message}`);
   });
-}
+};
 
 const textToSpeech = new TextToSpeechV1({
-  authenticator: new IamAuthenticator({ apikey: IBM_token }),
-  url: IBM_url
+  authenticator: new IamAuthenticator({ apikey: IBMToken }),
+  url: IBMUrl
 });
 
 const params = {
@@ -60,9 +62,9 @@ const handler = (err, val) => {
     m.channel.send('Couldn\'t find anything!');
     return;
   }
-  const page_title = val.query.search[0].title;
-  const extract = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exsentences=3&exlimit=1&titles=${page_title}&explaintext=1&formatversion=2`;
-  get_wiki(extract, (err, val) => {
+  const pageTitle = val.query.search[0].title;
+  const extract = `https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exsentences=3&exlimit=1&titles=${pageTitle}&explaintext=1&formatversion=2`;
+  getWiki(extract, (err, val) => {
     if (err || val.query.pages.length === 0) {
       console.error(err);
       m.channel.send('Couldn\'t find anything!');
@@ -85,7 +87,7 @@ const handler = (err, val) => {
       });
     m.channel.send(info);
   });
-}
+};
 
 module.exports = {
   name: 'wiki',
@@ -102,7 +104,7 @@ module.exports = {
     m = message;
     const keyword = args.join(' ');
     const search = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${keyword}&utf8=&format=json`;
-    get_wiki(search, handler);
+    getWiki(search, handler);
   },
 };
 

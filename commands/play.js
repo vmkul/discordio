@@ -1,3 +1,5 @@
+'use strict';
+
 const ytdl = require('ytdl-core');
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
@@ -5,34 +7,31 @@ const yts = require('yt-search');
 const { PassThrough } = require('stream');
 const Discord = require('discord.js');
 const { EventEmitter } = require('events');
-
+const guilds = [];
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-const obj = {
-  name: 'play',
-  description: 'Play a song',
-  guilds: [],
-  async execute(message, args) {
-    let guild;
-    if (message.guild)
-      guild = message.guild.id;
-    else
-      guild = message;
-    let controller = this.guilds.find(element => {
-      return element.guild_name === guild;
-    });
-    if (controller === undefined) controller = new song_control(guild);
-    if (args.length === 0) return;
-    find_song(message, args, controller);
-  },
-};
+function* selectTrack(queue) {
+  let i = 0;
+  while (true) {
+    yield queue[i];
+    i++;
+    if (i === queue.length) i = 0;
+  }
+}
 
-module.exports = obj;
+const createEmbed = (title, url, thumb, info, authorName, authorAvatar) =>
+  new Discord.MessageEmbed()
+    .setColor('#9deb70')
+    .setTitle(title)
+    .setURL(url)
+    .setAuthor(authorName, authorAvatar)
+    .setDescription(info)
+    .setThumbnail(thumb);
 
-class song_control extends EventEmitter {
-  constructor(guild_name) {
+class SongControl extends EventEmitter {
+  constructor(guildName) {
     super();
-    this.guild_name = guild_name;
+    this.guildName = guildName;
     this.queue = [];
     this.playing = false;
     this.volume = 1;
@@ -54,11 +53,11 @@ class song_control extends EventEmitter {
         }, 9e5);
       }
     });
-    obj.guilds.push(this);
+    guilds.push(this);
   }
 
   async play(song) {
-    if ((!song.message.member.voice.channel && !this.connection) || this.reading) return;
+    if (this.reading) return;
     if (!ytdl.validateURL(song.link)) {
       song.message.reply('There was an url error');
       this.emit('finish');
@@ -69,9 +68,10 @@ class song_control extends EventEmitter {
     }
 
     if (this.playing) {
-      if (this.queue.length > 200) return song.message.reply('The queue is too long!');
+      if (this.queue.length > 200)
+        return song.message.reply('The queue is too long!');
       this.queue.push(song);
-      this.gen = select_track(this.queue);
+      this.gen = selectTrack(this.queue);
       song.message.channel.send('Queued');
       await song.message.channel.send(song.embed);
       return;
@@ -82,21 +82,22 @@ class song_control extends EventEmitter {
 
     this.command = ffmpeg(ytdl(song.link, { filter: format => format.url })
       .on('error', e => {
-      song.message.reply('Download error');
-      console.log(e);
-      this.emit('finish');
-    })).outputFormat('mp3').on('error', () => {
+        song.message.reply('Download error');
+        console.log(e);
+        this.emit('finish');
+      })).outputFormat('mp3').on('error', () => {
       setImmediate(() => this.dispatcher.end());
     }).output(stream);
     this.command.run();
 
     if (this.effect) {
-      ffmpeg(stream).outputFormat('mp3').audioFilter(this.effect).on('error', err => {
-        song.message.reply('Wrong filter!');
-        console.log(err);
-        setImmediate(() => this.dispatcher.end());
-        this.effect = null;
-      }).output(effect).run();
+      ffmpeg(stream).outputFormat('mp3')
+        .audioFilter(this.effect).on('error', err => {
+          song.message.reply('Wrong filter!');
+          console.log(err);
+          setImmediate(() => this.dispatcher.end());
+          this.effect = null;
+        }).output(effect).run();
     }
 
     if (!song.message.member.voice.channel) {
@@ -104,13 +105,14 @@ class song_control extends EventEmitter {
       this.queue = [];
       return;
     }
-    this.connection = await song.message.member.voice.channel.join().catch(() => song.message.reply('There was an error connecting!'));
-
+    this.connection = await song.message.member.voice.channel.join()
+      .catch(() => song.message.reply('There was an error connecting!'));
 
     try {
-      let str = this.effect ? effect : stream;
-      this.dispatcher = this.connection.play(str.on('error', err => { throw err }), {volume: this.volume})
-          .on('error', err => { throw err });
+      const str = this.effect ? effect : stream;
+      this.dispatcher = this.connection.play(str
+        .on('error', err => { throw err; }), { volume: this.volume })
+        .on('error', err => { throw err; });
     } catch (e) {
       console.error(e);
       song.message.channel.send('There was an error processing your request');
@@ -134,22 +136,21 @@ class song_control extends EventEmitter {
   }
 }
 
-const find_song = (message, args, controller) => {
+const findSong = (message, args, controller) => {
   let term;
   if (args[0].startsWith('https://www.youtube.com/watch?v=')) {
     term = {
       pageStart: 1,
       pageEnd: 3,
       videoId: args[0].slice(32, 44),
-    }
+    };
   } else if (args[0].startsWith('https://youtu.be/')) {
     term = {
       pageStart: 1,
       pageEnd: 3,
       videoId: args[0].slice(17, 28),
-    }
-  }
-  else {
+    };
+  } else {
     term = args.join(' ');
   }
   yts(term, (err, results) => {
@@ -159,33 +160,35 @@ const find_song = (message, args, controller) => {
       return console.log(err);
     }
     if (results.videos) {
-      if (results.videos.length === 0) return message.reply('Couldn\'t find anything!');
+      if (results.videos.length === 0)
+        return message.reply('Couldn\'t find anything!');
       video = results.videos[0];
-    }
-    else
+    } else
       video = results;
-    const embed = create_Embed(video.title, video.url, video.thumbnail, video.description, message.author.username, message.author.avatarURL());
+    const embed = createEmbed(video.title, video.url,
+      video.thumbnail, video.description, message.author.username,
+      message.author.avatarURL());
     const link = video.url;
-    setImmediate(() => controller.play({ link: link, embed: embed, message: message }).catch(e => {console.error(e)}));
+    setImmediate(() => controller.play({ link, embed, message })
+      .catch(e => console.error(e)));
   });
-}
-
-function* select_track(queue) {
-  let i = 0;
-  while (true) {
-    yield queue[i];
-    i++;
-    if (i === queue.length) i = 0;
-  }
-}
-
-const create_Embed = (title, url, thumbnail, description, author_name, author_avatar) => {
-  return new Discord.MessageEmbed()
-    .setColor('#9deb70')
-    .setTitle(title)
-    .setURL(url)
-    .setAuthor(author_name, author_avatar)
-    .setDescription(description)
-    .setThumbnail(thumbnail);
 };
 
+const obj = {
+  name: 'play',
+  description: 'Play a song',
+  guilds,
+  async execute(message, args) {
+    let guild;
+    if (message.guild)
+      guild = message.guild.id;
+    else
+      guild = message;
+    let controller = this.guilds.find(element => element.guildName === guild);
+    if (controller === undefined) controller = new SongControl(guild);
+    if (args.length === 0) return;
+    findSong(message, args, controller);
+  },
+};
+
+module.exports = obj;

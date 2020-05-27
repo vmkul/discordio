@@ -1,3 +1,5 @@
+'use strict';
+
 const findC = require('../find_con');
 
 module.exports = {
