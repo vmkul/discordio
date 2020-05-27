@@ -86,7 +86,7 @@ class SongControl extends EventEmitter {
         console.log(e);
         this.emit('finish');
       })).outputFormat('mp3').on('error', () => {
-      this.emit('finish');
+      if (this.dispatcher) this.dispatcher.end();
     }).output(stream);
     this.command.run();
 
