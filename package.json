@@ -24,7 +24,6 @@
     "@ffmpeg-installer/ffmpeg": "^1.0.20",
     "canvas": "^2.6.1",
     "discord.js": "^12.2.0",
-    "eslint": "^6.8.0",
     "ffmpeg-static": "^4.1.1",
     "fluent-ffmpeg": "^2.1.2",
     "ibm-watson": "^5.5.0",
@@ -32,5 +31,13 @@
     "node-opus": "^0.3.3",
     "yt-search": "^1.1.2",
     "ytdl-core": "^2.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^7.1.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1"
   }
 }
