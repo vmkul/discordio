@@ -80,7 +80,7 @@ class SongControl extends EventEmitter {
     const stream = new PassThrough();
     const effect = new PassThrough();
 
-    this.command = ffmpeg(ytdl(song.link, { filter: format => format.url })
+    this.command = ffmpeg(ytdl(song.link, { filter: format => !!format.url })
       .on('error', e => {
         song.message.reply('Download error');
         console.log(e);
