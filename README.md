@@ -1,4 +1,5 @@
-﻿# Computer-based-training bot welcomes you! 🐱
+﻿[![Build Status](https://travis-ci.com/vmkul/discordio.svg?branch=master)](https://travis-ci.com/vmkul/discordio)
+# Computer-based-training bot welcomes you! 🐱
 *CBT* bot is a multifunctional bot for your Discord server ✨  
 ![](https://i.ibb.co/123WyPJ/Screenshot-40.png)
 
