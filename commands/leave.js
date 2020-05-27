@@ -10,7 +10,7 @@ module.exports = {
     if (controller === undefined) return;
     if (controller.connection) {
       controller.connection.disconnect();
-      controller.connection = false;
+      controller.queue = [];
       if (controller.dispatcher && controller.playing) {
         controller.dispatcher.end();
       }
