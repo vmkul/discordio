@@ -58,7 +58,11 @@ class song_control extends EventEmitter {
   }
 
   async play(song) {
-    if (typeof song.link !== 'string' || (!song.message.member.voice.channel && !this.connection) || this.reading) return;
+    if ((!song.message.member.voice.channel && !this.connection) || this.reading) return;
+    if (!ytdl.validateURL(song.link)) {
+      song.message.reply('There was an url error');
+      this.emit('finish');
+    }
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -73,15 +77,18 @@ class song_control extends EventEmitter {
       return;
     }
 
-    const link = song.link;
-
     const stream = new PassThrough();
     const effect = new PassThrough();
 
-    ffmpeg(ytdl(link)).outputFormat('mp3').on('error', () => {
-      console.log('ffmpeg error');
+    this.command = ffmpeg(ytdl(song.link, { filter: format => format.url })
+      .on('error', e => {
+      song.message.reply('Download error');
+      console.log(e);
+      this.emit('finish');
+    })).outputFormat('mp3').on('error', () => {
       setImmediate(() => this.dispatcher.end());
-    }).output(stream).run();
+    }).output(stream);
+    this.command.run();
 
     if (this.effect) {
       ffmpeg(stream).outputFormat('mp3').audioFilter(this.effect).on('error', err => {
@@ -92,7 +99,13 @@ class song_control extends EventEmitter {
       }).output(effect).run();
     }
 
-    this.connection = await song.message.member.voice.channel.join().catch(e => console.log(e));
+    if (!song.message.member.voice.channel) {
+      await song.message.reply('User left the channel, emptying the queue');
+      this.queue = [];
+      return;
+    }
+    this.connection = await song.message.member.voice.channel.join().catch(() => song.message.reply('There was an error connecting!'));
+
 
     try {
       let str = this.effect ? effect : stream;
