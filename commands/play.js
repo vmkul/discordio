@@ -103,6 +103,7 @@ class SongControl extends EventEmitter {
     if (!song.message.member.voice.channel) {
       await song.message.reply('User left the channel, emptying the queue');
       this.queue = [];
+      this.cycling = false;
       return;
     }
     this.connection = await song.message.member.voice.channel.join()
