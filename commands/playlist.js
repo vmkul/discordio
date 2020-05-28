@@ -44,6 +44,7 @@ module.exports = {
       if (results.items.length + controller.queue.length > 200)
         return message.reply('The queue is too long!');
 
+      let songsCounter = 0;
       results.items.forEach((video, index) => {
         const embed = createEmbed(video.title, video.url,
           video.thumbnail, video.description,
@@ -53,7 +54,9 @@ module.exports = {
         if (index === 0) return setImmediate(() => controller.play(song)
           .catch(e => console.error(e)));
         controller.queue.push(song);
+        songsCounter++;
       });
+      message.channel.send(`**Queued ${songsCounter} songs**`);
     });
   },
 };
