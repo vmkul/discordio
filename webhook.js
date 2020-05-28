@@ -1,55 +1,57 @@
 'use strict';
 
 const http = require('http');
+const https = require('https');
 const Discord = require('discord.js');
-const { webhookId, webhookToken } = require('./config.json');
+const { webhookId, webhookToken, newsToken } = require('./config.json');
 const PORT = process.env.PORT || 80;
+const random = maxVal => Math.floor(Math.random() * (maxVal + 1));
 
-const sendMessage = (info, content, images) => {
+const fetch = url => new Promise((resolve, reject) => {
+  const protocol = url.startsWith('https') ? https : http;
+  protocol.get(url, res => {
+    if (res.statusCode !== 200) {
+      const { statusCode, statusMessage } = res;
+      reject(new Error(`Status Code: ${statusCode} ${statusMessage}`));
+    }
+    res.setEncoding('utf8');
+    const buffer = [];
+    res.on('data', chunk => buffer.push(chunk));
+    res.on('end', () => resolve(buffer.join()));
+  });
+});
+
+const sendMessage = data => {
   const webhookClient = new Discord.WebhookClient(webhookId, webhookToken);
   const embed = new Discord.MessageEmbed()
-    .setTitle(info.subject)
-    .setAuthor(info.fromName)
-    .setDescription(content)
-    .setColor('#a504bf');
-  if (images.length !== 0) embed.setImage(images[0]);
+    .setTitle(data.title)
+    .setURL(data.url)
+    .setAuthor(`${data.author} (${data.source})`)
+    .setDescription(data.description)
+    .setColor('#ef0b88')
+    .setImage(data.image)
+    .setTimestamp(data.time);
   webhookClient.send('', {
     embeds: [embed],
   });
 };
 
 http.createServer((req, res) => {
-  let body = '';
-  req.on('data', chunk => {
-    body += chunk;
-  });
-
-  req.on('end', () => {
-    if (body.length !== 0) {
-      try {
-        console.log('Got a POST message');
-        const content = body.toString();
-        const regExp = /(https?:\/\/.*\.(?:png|jpg))/g;
-        const images = [];
-        let img;
-        const info = {
-          subject: req.headers['subject'],
-          fromName: req.headers['from_name']
-        };
-
-        while (img !== null) {
-          img = regExp.exec(content);
-          if (img) images.push(img[0]);
-        }
-
-        sendMessage(info, content, images);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-    res.writeHead(200);
-    res.end('Okay');
-  });
+  res.writeHead(200);
+  res.end('Okay');
 }).listen(PORT);
 
+const fetchNews = () => {
+  fetch(`https://newsapi.org/v2/top-headlines?country=ua&apiKey=${newsToken}`)
+    .then(res => {
+      const { articles } = JSON.parse(res);
+      const article = articles[random(articles.length)];
+      const { source, author, title, description,
+        url, urlToImage, publishedAt } = article;
+      sendMessage({ source: source.name, author, title,
+        description, url, image: urlToImage, time: publishedAt });
+    })
+    .catch(fetchNews);
+};
 
+setInterval(fetchNews, 3.6e6);
