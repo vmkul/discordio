@@ -24,13 +24,13 @@
     "@ffmpeg-installer/ffmpeg": "^1.0.20",
     "canvas": "^2.6.1",
     "discord.js": "^12.2.0",
-    "ffmpeg-static": "^4.1.1",
+    "ffmpeg-static": "^4.2.2",
     "fluent-ffmpeg": "^2.1.2",
     "ibm-watson": "^5.5.0",
     "node-lame": "^1.2.2",
     "node-opus": "^0.3.3",
     "yt-search": "^1.1.2",
-    "ytdl-core": "^2.1.1"
+    "ytdl-core": "^2.1.5"
   },
   "devDependencies": {
     "eslint": "^7.1.0",
