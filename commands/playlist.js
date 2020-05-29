@@ -45,18 +45,19 @@ module.exports = {
         return message.reply('The queue is too long!');
 
       let songsCounter = 0;
-      results.items.forEach((video, index) => {
+      results.items.forEach(video => {
         const embed = createEmbed(video.title, video.url,
           video.thumbnail, video.description,
           message.author.username, message.author.avatarURL());
         const link = video.url;
         const song = { link, embed, message };
-        if (index === 0) return setImmediate(() => controller.play(song)
-          .catch(e => console.error(e)));
         controller.queue.push(song);
         songsCounter++;
       });
       message.channel.send(`**Queued ${songsCounter} songs**`);
+      setImmediate(() => {
+        if (!controller.playing) controller.emit('finish');
+      });
     });
   },
 };
