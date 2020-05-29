@@ -111,6 +111,7 @@ class SongControl extends EventEmitter {
       .catch(() => song.message.reply('There was an error connecting!'));
 
     this.connection.on('disconnect', () => {
+      this.emit('finish');
       this.queue = [];
       this.cycling = false;
     });
