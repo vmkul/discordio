@@ -106,8 +106,14 @@ class SongControl extends EventEmitter {
       this.cycling = false;
       return;
     }
+
     this.connection = await song.message.member.voice.channel.join()
       .catch(() => song.message.reply('There was an error connecting!'));
+
+    this.connection.on('disconnect', () => {
+      this.queue = [];
+      this.cycling = false;
+    });
 
     try {
       const str = this.effect ? effect : stream;
