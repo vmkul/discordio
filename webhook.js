@@ -6,6 +6,8 @@ const Discord = require('discord.js');
 const { webhookId, webhookToken, newsToken } = require('./config.json');
 const PORT = process.env.PORT || 80;
 const random = maxVal => Math.floor(Math.random() * (maxVal + 1));
+let usedArticles = [];
+const maxValue = 16777215;
 
 const fetch = url => new Promise((resolve, reject) => {
   const protocol = url.startsWith('https') ? https : http;
@@ -21,6 +23,11 @@ const fetch = url => new Promise((resolve, reject) => {
   });
 });
 
+const chooseColor = () => {
+  const base10 = random(maxValue);
+  return '#' + base10.toString(16);
+};
+
 const sendMessage = data => {
   const webhookClient = new Discord.WebhookClient(webhookId, webhookToken);
   const embed = new Discord.MessageEmbed()
@@ -28,7 +35,7 @@ const sendMessage = data => {
     .setURL(data.url)
     .setAuthor(`${data.author} (${data.source})`)
     .setDescription(data.description)
-    .setColor('#ef0b88')
+    .setColor(chooseColor())
     .setImage(data.image)
     .setTimestamp(data.time);
   webhookClient.send('', {
@@ -41,17 +48,27 @@ http.createServer((req, res) => {
   res.end('Okay');
 }).listen(PORT);
 
-const fetchNews = () => {
-  fetch(`https://newsapi.org/v2/top-headlines?country=ua&apiKey=${newsToken}`)
+const fetchNews = query => {
+  fetch(`https://newsapi.org/v2/top-headlines?${query}&apiKey=${newsToken}`)
     .then(res => {
+      let article;
       const { articles } = JSON.parse(res);
-      const article = articles[random(articles.length)];
+      do {
+        article = articles.shift();
+        if (!article) return;
+      } while (usedArticles.includes(article.title));
+      usedArticles.push(article.title);
+      if (usedArticles.length === 100) usedArticles = [];
       const { source, author, title, description,
         url, urlToImage, publishedAt } = article;
       sendMessage({ source: source.name, author, title,
         description, url, image: urlToImage, time: publishedAt });
     })
-    .catch(fetchNews);
+    .catch(fetchNews.bind(null, query));
 };
 
-setInterval(fetchNews, 3.6e6);
+setInterval(() => {
+  fetchNews('country=ua');
+  fetchNews('sources=ign');
+}, 7.2e6);
+
