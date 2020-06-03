@@ -9,6 +9,15 @@ const random = maxVal => Math.floor(Math.random() * (maxVal + 1));
 let usedArticles = [];
 const maxValue = 16777215;
 
+function* selectQuery(queries) {
+  let i = 0;
+  while (true) {
+    yield queries[i];
+    i++;
+    if (i === queries.length) i = 0;
+  }
+}
+
 const fetch = url => new Promise((resolve, reject) => {
   const protocol = url.startsWith('https') ? https : http;
   protocol.get(url, res => {
@@ -67,8 +76,12 @@ const fetchNews = query => {
     .catch(fetchNews.bind(null, query));
 };
 
+const sources = ['country=ua', 'sources=ign', 'sources=die-zeit',
+  'sources=espn', 'sources=techradar'];
+const select = selectQuery(sources);
+
 setInterval(() => {
-  fetchNews('country=ua');
-  fetchNews('sources=ign');
-}, 7.2e6);
+  fetchNews(select.next().value);
+}, 3.6e6);
+
 
