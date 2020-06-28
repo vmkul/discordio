@@ -123,7 +123,8 @@ class SongControl extends EventEmitter {
         .on('error', err => { throw err; });
     } catch (e) {
       console.error(e);
-      song.message.channel.send('There was an error processing your request');
+      song.message.channel.send('There was an error while ' +
+        'processing your request');
       return;
     }
 
@@ -143,16 +144,18 @@ class SongControl extends EventEmitter {
     this.dispatcher.on('error', console.error);
   }
 }
-const YtSearch = (term, controller, message) => {
+
+const YtSearch = (term, controller, message, counter = 0) => {
+  if (counter > 5)
+    return message.reply('Nothing found!');
   const cb = (err, results) => {
     let video;
     if (err) {
-      message.reply('There was an error!');
-      throw err;
+      return message.reply('There was an error!');
     }
     if (results.videos) {
       if (results.videos.length === 0) {
-        return YtSearch(term, controller, message);
+        return YtSearch(term, controller, message, ++counter);
       }
       video = results.videos[0];
     } else
@@ -184,15 +187,11 @@ const findSong = (message, args, controller) => {
   } else {
     term = args.join(' ');
   }
-  try {
-    YtSearch(term, controller, message);
-  } catch (e) {
-    message.reply('An error occurred!');
-  }
+  YtSearch(term, controller, message);
 };
 
 const obj = {
-  name: 'play',
+  name: 'p',
   description: 'Play a song',
   guilds,
   async execute(message, args) {
