@@ -25,7 +25,7 @@ const createEmbed = (title, url, thumb, info, authorName, authorAvatar) =>
     .setTitle(title)
     .setURL(url)
     .setAuthor(authorName, authorAvatar)
-    .setDescription(info)
+    //.setDescription(info)
     .setThumbnail(thumb);
 
 class SongControl extends EventEmitter {
@@ -49,7 +49,7 @@ class SongControl extends EventEmitter {
         setImmediate(() => this.play(song));
       } else {
         this.timer = setTimeout(() => {
-          if (this.connection) this.connection.disconnect();
+          if (this.connection && !this.playing) this.connection.disconnect();
         }, 9e5);
       }
     });
@@ -143,6 +143,29 @@ class SongControl extends EventEmitter {
     this.dispatcher.on('error', console.error);
   }
 }
+const YtSearch = (term, controller, message) => {
+  const cb = (err, results) => {
+    let video;
+    if (err) {
+      message.reply('There was an error!');
+      throw err;
+    }
+    if (results.videos) {
+      if (results.videos.length === 0) {
+        return YtSearch(term, controller, message);
+      }
+      video = results.videos[0];
+    } else
+      video = results;
+    const embed = createEmbed(video.title, video.url,
+      video.thumbnail, video.description, message.author.username,
+      message.author.avatarURL());
+    const link = video.url;
+    setImmediate(() => controller.play({ link, embed, message })
+      .catch(e => console.error(e)));
+  };
+  yts(term, cb);
+};
 
 const findSong = (message, args, controller) => {
   let term;
@@ -161,25 +184,11 @@ const findSong = (message, args, controller) => {
   } else {
     term = args.join(' ');
   }
-  yts(term, (err, results) => {
-    let video;
-    if (err) {
-      message.reply('There was an error!');
-      return console.log(err);
-    }
-    if (results.videos) {
-      if (results.videos.length === 0)
-        return message.reply('Couldn\'t find anything!');
-      video = results.videos[0];
-    } else
-      video = results;
-    const embed = createEmbed(video.title, video.url,
-      video.thumbnail, video.description, message.author.username,
-      message.author.avatarURL());
-    const link = video.url;
-    setImmediate(() => controller.play({ link, embed, message })
-      .catch(e => console.error(e)));
-  });
+  try {
+    YtSearch(term, controller, message);
+  } catch (e) {
+    message.reply('An error occurred!');
+  }
 };
 
 const obj = {
