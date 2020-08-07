@@ -25,7 +25,7 @@ const createEmbed = (title, url, thumb, info, authorName, authorAvatar) =>
     .setTitle(title)
     .setURL(url)
     .setAuthor(authorName, authorAvatar)
-    .setDescription(info)
+    //.setDescription(info)
     .setThumbnail(thumb);
 
 class SongControl extends EventEmitter {
@@ -49,7 +49,7 @@ class SongControl extends EventEmitter {
         setImmediate(() => this.play(song));
       } else {
         this.timer = setTimeout(() => {
-          if (this.connection) this.connection.disconnect();
+          if (this.connection && !this.playing) this.connection.disconnect();
         }, 9e5);
       }
     });
@@ -123,7 +123,8 @@ class SongControl extends EventEmitter {
         .on('error', err => { throw err; });
     } catch (e) {
       console.error(e);
-      song.message.channel.send('There was an error processing your request');
+      song.message.channel.send('There was an error while ' +
+        'processing your request');
       return;
     }
 
@@ -144,6 +145,31 @@ class SongControl extends EventEmitter {
   }
 }
 
+const YtSearch = (term, controller, message, counter = 0) => {
+  if (counter > 5)
+    return message.reply('Nothing found!');
+  const cb = (err, results) => {
+    let video;
+    if (err) {
+      return message.reply('There was an error!');
+    }
+    if (results.videos) {
+      if (results.videos.length === 0) {
+        return YtSearch(term, controller, message, ++counter);
+      }
+      video = results.videos[0];
+    } else
+      video = results;
+    const embed = createEmbed(video.title, video.url,
+      video.thumbnail, video.description, message.author.username,
+      message.author.avatarURL());
+    const link = video.url;
+    setImmediate(() => controller.play({ link, embed, message })
+      .catch(e => console.error(e)));
+  };
+  yts(term, cb);
+};
+
 const findSong = (message, args, controller) => {
   let term;
   if (args[0].startsWith('https://www.youtube.com/watch?v=')) {
@@ -161,29 +187,11 @@ const findSong = (message, args, controller) => {
   } else {
     term = args.join(' ');
   }
-  yts(term, (err, results) => {
-    let video;
-    if (err) {
-      message.reply('There was an error!');
-      return console.log(err);
-    }
-    if (results.videos) {
-      if (results.videos.length === 0)
-        return message.reply('Couldn\'t find anything!');
-      video = results.videos[0];
-    } else
-      video = results;
-    const embed = createEmbed(video.title, video.url,
-      video.thumbnail, video.description, message.author.username,
-      message.author.avatarURL());
-    const link = video.url;
-    setImmediate(() => controller.play({ link, embed, message })
-      .catch(e => console.error(e)));
-  });
+  YtSearch(term, controller, message);
 };
 
 const obj = {
-  name: 'play',
+  name: 'p',
   description: 'Play a song',
   guilds,
   async execute(message, args) {

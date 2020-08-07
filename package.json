@@ -26,16 +26,27 @@
     "discord.js": "^12.2.0",
     "ffmpeg-static": "^4.2.6",
     "fluent-ffmpeg": "^2.1.2",
+<<<<<<< HEAD
     "ibm-watson": "^5.6.2",
+=======
+    "ibm-watson": "^5.6.0",
+>>>>>>> da8f4b19e27cb72e7b8e0f009c90e2354d4b7464
     "node-lame": "^1.2.2",
     "node-opus": "^0.3.3",
+    "pg": "^8.2.1",
     "yt-search": "^1.1.2",
-    "ytdl-core": "^2.1.5"
+    "ytdl-core": "^2.1.7"
   },
   "devDependencies": {
+<<<<<<< HEAD
     "eslint": "^7.6.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-plugin-import": "^2.22.0",
+=======
+    "eslint": "^7.2.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.21.1",
+>>>>>>> da8f4b19e27cb72e7b8e0f009c90e2354d4b7464
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^4.0.1"
